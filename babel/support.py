@@ -26,7 +26,6 @@ from datetime import (
     timedelta as std_timedelta,
 )
 from io import BufferedReader, BytesIO
-from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 
 class Format:
@@ -51,7 +50,7 @@ class Format:
         self.locale = Locale.parse(locale)
         self.tzinfo = tzinfo
 
-    def date(self, date: Optional[std_date] = None, format: str = "medium") -> str:
+    def date(self, date: t.Optional[std_date] = None, format: str = "medium") -> str:
         """Return a date formatted according to the given pattern.
 
         >>> from datetime import date
@@ -62,7 +61,7 @@ class Format:
         return format_date(date, format, locale=self.locale)
 
     def datetime(
-        self, datetime: Optional[std_datetime] = None, format: str = "medium"
+        self, datetime: t.Optional[std_datetime] = None, format: str = "medium"
     ) -> str:
         """Return a date and time formatted according to the given pattern.
 
@@ -75,7 +74,9 @@ class Format:
         return format_datetime(datetime, format, tzinfo=self.tzinfo,
                                locale=self.locale)
 
-    def time(self, time: Optional[std_datetime] = None, format: str = "medium") -> str:
+    def time(
+        self, time: t.Optional[std_datetime] = None, format: str = "medium"
+    ) -> str:
         """Return a time formatted according to the given pattern.
 
         >>> from datetime import datetime
@@ -181,7 +182,7 @@ class LazyProxy:
     """
     __slots__ = ['_func', '_args', '_kwargs', '_value', '_is_cache_enabled', '_attribute_error']
 
-    def __init__(self, func: Callable, *args, **kwargs) -> None:
+    def __init__(self, func: t.Callable, *args, **kwargs) -> None:
         is_cache_enabled = kwargs.pop('enable_cache', True)
         # Avoid triggering our own __setattr__ implementation
         object.__setattr__(self, '_func', func)
@@ -192,7 +193,7 @@ class LazyProxy:
         object.__setattr__(self, '_attribute_error', None)
 
     @property
-    def value(self) -> Union[int, str]:
+    def value(self) -> t.Union[int, str]:
         if self._value is None:
             try:
                 value = self._func(*self._args, **self._kwargs)
@@ -290,7 +291,7 @@ class LazyProxy:
             **self._kwargs
         )
 
-    def __deepcopy__(self, memo: Dict[Any, Any]) -> "LazyProxy":
+    def __deepcopy__(self, memo: t.Dict[t.Any, t.Any]) -> "LazyProxy":
         from copy import deepcopy
         return LazyProxy(
             deepcopy(self._func, memo),
@@ -318,7 +319,7 @@ class NullTranslations(gettext.NullTranslations):
     # mypy thinks this instance variable is a method if we declare it here
     # plural: t.Callable[[int], int]
 
-    def __init__(self, fp: Optional[Union[BytesIO, BufferedReader]] = None) -> None:
+    def __init__(self, fp: t.Optional[t.Union[BytesIO, BufferedReader]] = None) -> None:
         """Initialize a simple translations class which is not backed by a
         real catalog. Behaves similar to gettext.NullTranslations but also
         offers Babel's on *gettext methods (e.g. 'dgettext()').
@@ -560,8 +561,8 @@ class Translations(NullTranslations, gettext.GNUTranslations):
 
     def __init__(
         self,
-        fp: Optional[Union[BytesIO, BufferedReader]] = None,
-        domain: Optional[str] = None,
+        fp: t.Optional[t.Union[BytesIO, BufferedReader]] = None,
+        domain: t.Optional[str] = None,
     ) -> None:
         """Initialize the translations catalog.
 
@@ -577,9 +578,9 @@ class Translations(NullTranslations, gettext.GNUTranslations):
     @classmethod
     def load(
         cls,
-        dirname: Optional[str] = None,
-        locales: Optional[Tuple[str]] = None,
-        domain: Optional[str] = None,
+        dirname: t.Optional[str] = None,
+        locales: t.Optional[t.Tuple[str]] = None,
+        domain: t.Optional[str] = None,
     ) -> "Translations":
         """Load translations from the given directory.
 
