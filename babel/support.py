@@ -10,6 +10,7 @@
     :copyright: (c) 2013-2022 by the Babel Team.
     :license: BSD, see LICENSE for more details.
 """
+import typing as t
 
 import gettext
 import locale
@@ -286,9 +287,23 @@ class LazyProxy:
 
 class NullTranslations(gettext.NullTranslations):
 
-    DEFAULT_DOMAIN = None
+    DEFAULT_DOMAIN: t.Optional[str] = None
 
-    def __init__(self, fp=None):
+    # from `gettext.Nulltranslations`. not in gettext stub because private.
+    # however, we always set the fallback to a `NullTranslations` instance
+    # instead of a `gettext.NullTranslations` one,
+    # so this declaration is necessary to inform about a stricter type.
+    _fallback: "NullTranslations"
+    _info: dict
+
+    _domains: t.Dict[str, "Translations"]
+    _catalog: t.Dict[t.Union[str, tuple[str, int]], str]
+    domain: t.Optional[str]
+    files: t.List[str]
+    # mypy thinks this instance variable is a method if we declare it here
+    # plural: t.Callable[[int], int]
+
+    def __init__(self, fp=None) -> None:
         """Initialize a simple translations class which is not backed by a
         real catalog. Behaves similar to gettext.NullTranslations but also
         offers Babel's on *gettext methods (e.g. 'dgettext()').
@@ -299,19 +314,19 @@ class NullTranslations(gettext.NullTranslations):
         # is parsed (fp != None). Ensure that they are always present because
         # some *gettext methods (including '.gettext()') rely on the attributes.
         self._catalog = {}
-        self.plural = lambda n: int(n != 1)
+        self.plural: t.Callable[[int], int] = lambda n: int(n != 1)
         super().__init__(fp=fp)
         self.files = list(filter(None, [getattr(fp, 'name', None)]))
         self.domain = self.DEFAULT_DOMAIN
         self._domains = {}
 
-    def dgettext(self, domain, message):
+    def dgettext(self, domain: str, message: str) -> str:
         """Like ``gettext()``, but look the message up in the specified
         domain.
         """
         return self._domains.get(domain, self).gettext(message)
 
-    def ldgettext(self, domain, message):
+    def ldgettext(self, domain: str, message: str) -> str:
         """Like ``lgettext()``, but look the message up in the specified
         domain.
         """
@@ -320,7 +335,7 @@ class NullTranslations(gettext.NullTranslations):
                       DeprecationWarning, 2)
         return self._domains.get(domain, self).lgettext(message)
 
-    def udgettext(self, domain, message):
+    def udgettext(self, domain: str, message: str) -> str:
         """Like ``ugettext()``, but look the message up in the specified
         domain.
         """
@@ -328,13 +343,13 @@ class NullTranslations(gettext.NullTranslations):
     # backward compatibility with 0.9
     dugettext = udgettext
 
-    def dngettext(self, domain, singular, plural, num):
+    def dngettext(self, domain: str, singular: str, plural: str, num: int) -> str:
         """Like ``ngettext()``, but look the message up in the specified
         domain.
         """
         return self._domains.get(domain, self).ngettext(singular, plural, num)
 
-    def ldngettext(self, domain, singular, plural, num):
+    def ldngettext(self, domain: str, singular: str, plural: str, num: int) -> str:
         """Like ``lngettext()``, but look the message up in the specified
         domain.
         """
@@ -343,7 +358,7 @@ class NullTranslations(gettext.NullTranslations):
                       DeprecationWarning, 2)
         return self._domains.get(domain, self).lngettext(singular, plural, num)
 
-    def udngettext(self, domain, singular, plural, num):
+    def udngettext(self, domain: str, singular: str, plural: str, num: int) -> str:
         """Like ``ungettext()`` but look the message up in the specified
         domain.
         """
@@ -358,7 +373,7 @@ class NullTranslations(gettext.NullTranslations):
     # msgctxt + "\x04" + msgid (gettext version >= 0.15)
     CONTEXT_ENCODING = '%s\x04%s'
 
-    def pgettext(self, context, message):
+    def pgettext(self, context, message: str) -> str:
         """Look up the `context` and `message` id in the catalog and return the
         corresponding message string, as an 8-bit string encoded with the
         catalog's charset encoding, if known.  If there is no entry in the
@@ -373,9 +388,9 @@ class NullTranslations(gettext.NullTranslations):
             if self._fallback:
                 return self._fallback.pgettext(context, message)
             return message
-        return tmsg
+        return t.cast(str, tmsg)
 
-    def lpgettext(self, context, message):
+    def lpgettext(self, context, message: str) -> bytes:
         """Equivalent to ``pgettext()``, but the translation is returned in the
         preferred system encoding, if no other encoding was explicitly set with
         ``bind_textdomain_codeset()``.
@@ -387,7 +402,7 @@ class NullTranslations(gettext.NullTranslations):
         encoding = getattr(self, "_output_charset", None) or locale.getpreferredencoding()
         return tmsg.encode(encoding)
 
-    def npgettext(self, context, singular, plural, num):
+    def npgettext(self, context, singular: str, plural: str, num: int) -> str:
         """Do a plural-forms lookup of a message id.  `singular` is used as the
         message id for purposes of lookup in the catalog, while `num` is used to
         determine which plural form to use.  The returned message string is an
@@ -410,7 +425,7 @@ class NullTranslations(gettext.NullTranslations):
             else:
                 return plural
 
-    def lnpgettext(self, context, singular, plural, num):
+    def lnpgettext(self, context, singular: str, plural: str, num: int) -> t.Union[str, bytes]:
         """Equivalent to ``npgettext()``, but the translation is returned in the
         preferred system encoding, if no other encoding was explicitly set with
         ``bind_textdomain_codeset()``.
@@ -431,7 +446,7 @@ class NullTranslations(gettext.NullTranslations):
             else:
                 return plural
 
-    def upgettext(self, context, message):
+    def upgettext(self, context, message: str) -> str:
         """Look up the `context` and `message` id in the catalog and return the
         corresponding message string, as a Unicode string.  If there is no entry
         in the catalog for the `message` id and `context`, and a fallback has
@@ -447,7 +462,7 @@ class NullTranslations(gettext.NullTranslations):
             return str(message)
         return tmsg
 
-    def unpgettext(self, context, singular, plural, num):
+    def unpgettext(self, context, singular: str, plural: str, num: int) -> str:
         """Do a plural-forms lookup of a message id.  `singular` is used as the
         message id for purposes of lookup in the catalog, while `num` is used to
         determine which plural form to use.  The returned message string is a
@@ -470,13 +485,13 @@ class NullTranslations(gettext.NullTranslations):
                 tmsg = str(plural)
         return tmsg
 
-    def dpgettext(self, domain, context, message):
+    def dpgettext(self, domain: str, context, message: str) -> str:
         """Like `pgettext()`, but look the message up in the specified
         `domain`.
         """
         return self._domains.get(domain, self).pgettext(context, message)
 
-    def udpgettext(self, domain, context, message):
+    def udpgettext(self, domain: str, context, message: str) -> str:
         """Like `upgettext()`, but look the message up in the specified
         `domain`.
         """
@@ -484,21 +499,21 @@ class NullTranslations(gettext.NullTranslations):
     # backward compatibility with 0.9
     dupgettext = udpgettext
 
-    def ldpgettext(self, domain, context, message):
+    def ldpgettext(self, domain: str, context, message: str) -> bytes:
         """Equivalent to ``dpgettext()``, but the translation is returned in the
         preferred system encoding, if no other encoding was explicitly set with
         ``bind_textdomain_codeset()``.
         """
         return self._domains.get(domain, self).lpgettext(context, message)
 
-    def dnpgettext(self, domain, context, singular, plural, num):
+    def dnpgettext(self, domain: str, context, singular: str, plural: str, num: int) -> str:
         """Like ``npgettext``, but look the message up in the specified
         `domain`.
         """
         return self._domains.get(domain, self).npgettext(context, singular,
                                                          plural, num)
 
-    def udnpgettext(self, domain, context, singular, plural, num):
+    def udnpgettext(self, domain: str, context, singular: str, plural: str, num: int) -> str:
         """Like ``unpgettext``, but look the message up in the specified
         `domain`.
         """
@@ -507,7 +522,7 @@ class NullTranslations(gettext.NullTranslations):
     # backward compatibility with 0.9
     dunpgettext = udnpgettext
 
-    def ldnpgettext(self, domain, context, singular, plural, num):
+    def ldnpgettext(self, domain: str, context, singular: str, plural: str, num: int) -> str:
         """Equivalent to ``dnpgettext()``, but the translation is returned in
         the preferred system encoding, if no other encoding was explicitly set
         with ``bind_textdomain_codeset()``.
@@ -562,7 +577,7 @@ class Translations(NullTranslations, gettext.GNUTranslations):
         return '<%s: "%s">' % (type(self).__name__,
                                self._info.get('project-id-version'))
 
-    def add(self, translations, merge=True):
+    def add(self, translations: "Translations", merge: bool = True) -> "Translations":
         """Add the given translations to the catalog.
 
         If the domain of the translations is different than that of the
@@ -588,7 +603,7 @@ class Translations(NullTranslations, gettext.GNUTranslations):
 
         return self
 
-    def merge(self, translations):
+    def merge(self, translations: "Translations") -> "Translations":
         """Merge the given translations into the catalog.
 
         Message translations in the specified catalog override any messages
