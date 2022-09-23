@@ -19,6 +19,10 @@ from babel.dates import format_date, format_datetime, format_time, \
     format_timedelta
 from babel.numbers import format_decimal, format_currency, \
     format_percent, format_scientific
+from Format import datetime
+from datetime import date, datetime, timedelta
+from io import BufferedReader, BytesIO
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 
 class Format:
@@ -34,7 +38,7 @@ class Format:
     u'1.234'
     """
 
-    def __init__(self, locale, tzinfo=None):
+    def __init__(self, locale: str, tzinfo: None=None) -> None:
         """Initialize the formatter.
 
         :param locale: the locale identifier or `Locale` instance
@@ -43,7 +47,7 @@ class Format:
         self.locale = Locale.parse(locale)
         self.tzinfo = tzinfo
 
-    def date(self, date=None, format='medium'):
+    def date(self, date: Optional[date]=None, format: str='medium') -> str:
         """Return a date formatted according to the given pattern.
 
         >>> from datetime import date
@@ -53,7 +57,7 @@ class Format:
         """
         return format_date(date, format, locale=self.locale)
 
-    def datetime(self, datetime=None, format='medium'):
+    def datetime(self, datetime: Optional[datetime]=None, format: str='medium') -> str:
         """Return a date and time formatted according to the given pattern.
 
         >>> from datetime import datetime
@@ -65,7 +69,7 @@ class Format:
         return format_datetime(datetime, format, tzinfo=self.tzinfo,
                                locale=self.locale)
 
-    def time(self, time=None, format='medium'):
+    def time(self, time: Optional[datetime]=None, format: str='medium') -> str:
         """Return a time formatted according to the given pattern.
 
         >>> from datetime import datetime
@@ -76,8 +80,8 @@ class Format:
         """
         return format_time(time, format, tzinfo=self.tzinfo, locale=self.locale)
 
-    def timedelta(self, delta, granularity='second', threshold=.85,
-                  format='long', add_direction=False):
+    def timedelta(self, delta: timedelta, granularity: str='second', threshold: float=.85,
+                  format: str='long', add_direction: bool=False) -> str:
         """Return a time delta according to the rules of the given locale.
 
         >>> from datetime import timedelta
@@ -90,7 +94,7 @@ class Format:
                                 format=format, add_direction=add_direction,
                                 locale=self.locale)
 
-    def number(self, number):
+    def number(self, number: int) -> str:
         """Return an integer number formatted for the locale.
 
         >>> fmt = Format('en_US')
@@ -99,7 +103,7 @@ class Format:
         """
         return format_decimal(number, locale=self.locale)
 
-    def decimal(self, number, format=None):
+    def decimal(self, number: float, format: None=None) -> str:
         """Return a decimal number formatted for the locale.
 
         >>> fmt = Format('en_US')
@@ -113,7 +117,7 @@ class Format:
         """
         return format_currency(number, currency, locale=self.locale)
 
-    def percent(self, number, format=None):
+    def percent(self, number: float, format: None=None) -> str:
         """Return a number formatted as percentage for the locale.
 
         >>> fmt = Format('en_US')
@@ -165,7 +169,7 @@ class LazyProxy:
     """
     __slots__ = ['_func', '_args', '_kwargs', '_value', '_is_cache_enabled', '_attribute_error']
 
-    def __init__(self, func, *args, **kwargs):
+    def __init__(self, func: Callable, *args, **kwargs) -> None:
         is_cache_enabled = kwargs.pop('enable_cache', True)
         # Avoid triggering our own __setattr__ implementation
         object.__setattr__(self, '_func', func)
@@ -176,7 +180,7 @@ class LazyProxy:
         object.__setattr__(self, '_attribute_error', None)
 
     @property
-    def value(self):
+    def value(self) -> Union[int, str]:
         if self._value is None:
             try:
                 value = self._func(*self._args, **self._kwargs)
@@ -204,7 +208,7 @@ class LazyProxy:
     def __len__(self):
         return len(self.value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value)
 
     def __unicode__(self):
@@ -213,7 +217,7 @@ class LazyProxy:
     def __add__(self, other):
         return self.value + other
 
-    def __radd__(self, other):
+    def __radd__(self, other: str) -> str:
         return other + self.value
 
     def __mod__(self, other):
@@ -231,7 +235,7 @@ class LazyProxy:
     def __call__(self, *args, **kwargs):
         return self.value(*args, **kwargs)
 
-    def __lt__(self, other):
+    def __lt__(self, other: "LazyProxy") -> bool:
         return self.value < other
 
     def __le__(self, other):
@@ -243,7 +247,7 @@ class LazyProxy:
     def __ne__(self, other):
         return self.value != other
 
-    def __gt__(self, other):
+    def __gt__(self, other: str) -> bool:
         return self.value > other
 
     def __ge__(self, other):
@@ -252,7 +256,7 @@ class LazyProxy:
     def __delattr__(self, name):
         delattr(self.value, name)
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str):
         if self._attribute_error is not None:
             raise self._attribute_error
         return getattr(self.value, name)
@@ -269,7 +273,7 @@ class LazyProxy:
     def __setitem__(self, key, value):
         self.value[key] = value
 
-    def __copy__(self):
+    def __copy__(self) -> "LazyProxy":
         return LazyProxy(
             self._func,
             enable_cache=self._is_cache_enabled,
@@ -277,7 +281,7 @@ class LazyProxy:
             **self._kwargs
         )
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo: Dict[Any, Any]) -> "LazyProxy":
         from copy import deepcopy
         return LazyProxy(
             deepcopy(self._func, memo),
@@ -291,7 +295,7 @@ class NullTranslations(gettext.NullTranslations):
 
     DEFAULT_DOMAIN = None
 
-    def __init__(self, fp=None):
+    def __init__(self, fp: Optional[Union[BytesIO, BufferedReader]]=None) -> None:
         """Initialize a simple translations class which is not backed by a
         real catalog. Behaves similar to gettext.NullTranslations but also
         offers Babel's on *gettext methods (e.g. 'dgettext()').
@@ -308,7 +312,7 @@ class NullTranslations(gettext.NullTranslations):
         self.domain = self.DEFAULT_DOMAIN
         self._domains = {}
 
-    def dgettext(self, domain, message):
+    def dgettext(self, domain: str, message: str) -> str:
         """Like ``gettext()``, but look the message up in the specified
         domain.
         """
@@ -323,7 +327,7 @@ class NullTranslations(gettext.NullTranslations):
                       DeprecationWarning, 2)
         return self._domains.get(domain, self).lgettext(message)
 
-    def udgettext(self, domain, message):
+    def udgettext(self, domain: str, message: str) -> str:
         """Like ``ugettext()``, but look the message up in the specified
         domain.
         """
@@ -331,7 +335,7 @@ class NullTranslations(gettext.NullTranslations):
     # backward compatibility with 0.9
     dugettext = udgettext
 
-    def dngettext(self, domain, singular, plural, num):
+    def dngettext(self, domain: str, singular: str, plural: str, num: int) -> str:
         """Like ``ngettext()``, but look the message up in the specified
         domain.
         """
@@ -346,7 +350,7 @@ class NullTranslations(gettext.NullTranslations):
                       DeprecationWarning, 2)
         return self._domains.get(domain, self).lngettext(singular, plural, num)
 
-    def udngettext(self, domain, singular, plural, num):
+    def udngettext(self, domain: str, singular: str, plural: str, num: int) -> str:
         """Like ``ungettext()`` but look the message up in the specified
         domain.
         """
@@ -361,7 +365,7 @@ class NullTranslations(gettext.NullTranslations):
     # msgctxt + "\x04" + msgid (gettext version >= 0.15)
     CONTEXT_ENCODING = '%s\x04%s'
 
-    def pgettext(self, context, message):
+    def pgettext(self, context: str, message: str) -> str:
         """Look up the `context` and `message` id in the catalog and return the
         corresponding message string, as an 8-bit string encoded with the
         catalog's charset encoding, if known.  If there is no entry in the
@@ -390,7 +394,7 @@ class NullTranslations(gettext.NullTranslations):
         encoding = getattr(self, "_output_charset", None) or locale.getpreferredencoding()
         return tmsg.encode(encoding)
 
-    def npgettext(self, context, singular, plural, num):
+    def npgettext(self, context: str, singular: str, plural: str, num: int) -> str:
         """Do a plural-forms lookup of a message id.  `singular` is used as the
         message id for purposes of lookup in the catalog, while `num` is used to
         determine which plural form to use.  The returned message string is an
@@ -434,7 +438,7 @@ class NullTranslations(gettext.NullTranslations):
             else:
                 return plural
 
-    def upgettext(self, context, message):
+    def upgettext(self, context: str, message: str) -> str:
         """Look up the `context` and `message` id in the catalog and return the
         corresponding message string, as a Unicode string.  If there is no entry
         in the catalog for the `message` id and `context`, and a fallback has
@@ -450,7 +454,7 @@ class NullTranslations(gettext.NullTranslations):
             return str(message)
         return tmsg
 
-    def unpgettext(self, context, singular, plural, num):
+    def unpgettext(self, context: str, singular: str, plural: str, num: int) -> str:
         """Do a plural-forms lookup of a message id.  `singular` is used as the
         message id for purposes of lookup in the catalog, while `num` is used to
         determine which plural form to use.  The returned message string is a
@@ -473,13 +477,13 @@ class NullTranslations(gettext.NullTranslations):
                 tmsg = str(plural)
         return tmsg
 
-    def dpgettext(self, domain, context, message):
+    def dpgettext(self, domain: str, context: str, message: str) -> str:
         """Like `pgettext()`, but look the message up in the specified
         `domain`.
         """
         return self._domains.get(domain, self).pgettext(context, message)
 
-    def udpgettext(self, domain, context, message):
+    def udpgettext(self, domain: str, context: str, message: str) -> str:
         """Like `upgettext()`, but look the message up in the specified
         `domain`.
         """
@@ -494,14 +498,14 @@ class NullTranslations(gettext.NullTranslations):
         """
         return self._domains.get(domain, self).lpgettext(context, message)
 
-    def dnpgettext(self, domain, context, singular, plural, num):
+    def dnpgettext(self, domain: str, context: str, singular: str, plural: str, num: int) -> str:
         """Like ``npgettext``, but look the message up in the specified
         `domain`.
         """
         return self._domains.get(domain, self).npgettext(context, singular,
                                                          plural, num)
 
-    def udnpgettext(self, domain, context, singular, plural, num):
+    def udnpgettext(self, domain: str, context: str, singular: str, plural: str, num: int) -> str:
         """Like ``unpgettext``, but look the message up in the specified
         `domain`.
         """
@@ -527,7 +531,7 @@ class Translations(NullTranslations, gettext.GNUTranslations):
 
     DEFAULT_DOMAIN = 'messages'
 
-    def __init__(self, fp=None, domain=None):
+    def __init__(self, fp: Optional[Union[BytesIO, BufferedReader]]=None, domain: Optional[str]=None) -> None:
         """Initialize the translations catalog.
 
         :param fp: the file-like object the translation should be read from
@@ -540,7 +544,7 @@ class Translations(NullTranslations, gettext.GNUTranslations):
     ungettext = gettext.GNUTranslations.ngettext
 
     @classmethod
-    def load(cls, dirname=None, locales=None, domain=None):
+    def load(cls, dirname: Optional[str]=None, locales: Optional[Tuple[str]]=None, domain: Optional[str]=None) -> "Translations":
         """Load translations from the given directory.
 
         :param dirname: the directory containing the ``MO`` files
@@ -565,7 +569,7 @@ class Translations(NullTranslations, gettext.GNUTranslations):
         return '<%s: "%s">' % (type(self).__name__,
                                self._info.get('project-id-version'))
 
-    def add(self, translations, merge=True):
+    def add(self, translations: "Translations", merge: bool=True) -> "Translations":
         """Add the given translations to the catalog.
 
         If the domain of the translations is different than that of the
@@ -591,7 +595,7 @@ class Translations(NullTranslations, gettext.GNUTranslations):
 
         return self
 
-    def merge(self, translations):
+    def merge(self, translations: "Translations") -> "Translations":
         """Merge the given translations into the catalog.
 
         Message translations in the specified catalog override any messages
