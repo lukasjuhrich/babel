@@ -20,8 +20,11 @@ from babel.dates import format_date, format_datetime, format_time, \
     format_timedelta
 from babel.numbers import format_decimal, format_currency, \
     format_percent, format_scientific
-from Format import datetime
-from datetime import date, datetime, timedelta
+from datetime import (
+    date as std_date,
+    datetime as std_datetime,
+    timedelta as std_timedelta,
+)
 from io import BufferedReader, BytesIO
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
@@ -48,7 +51,7 @@ class Format:
         self.locale = Locale.parse(locale)
         self.tzinfo = tzinfo
 
-    def date(self, date: Optional[date] = None, format: str = "medium") -> str:
+    def date(self, date: Optional[std_date] = None, format: str = "medium") -> str:
         """Return a date formatted according to the given pattern.
 
         >>> from datetime import date
@@ -59,7 +62,7 @@ class Format:
         return format_date(date, format, locale=self.locale)
 
     def datetime(
-        self, datetime: Optional[datetime] = None, format: str = "medium"
+        self, datetime: Optional[std_datetime] = None, format: str = "medium"
     ) -> str:
         """Return a date and time formatted according to the given pattern.
 
@@ -72,7 +75,7 @@ class Format:
         return format_datetime(datetime, format, tzinfo=self.tzinfo,
                                locale=self.locale)
 
-    def time(self, time: Optional[datetime] = None, format: str = "medium") -> str:
+    def time(self, time: Optional[std_datetime] = None, format: str = "medium") -> str:
         """Return a time formatted according to the given pattern.
 
         >>> from datetime import datetime
@@ -85,7 +88,7 @@ class Format:
 
     def timedelta(
         self,
-        delta: timedelta,
+        delta: std_timedelta,
         granularity: str = "second",
         threshold: float = 0.85,
         format: str = "long",
