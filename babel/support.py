@@ -145,7 +145,10 @@ class Format:
         return format_scientific(number, locale=self.locale)
 
 
-class LazyProxy:
+_TValue = t.TypeVar("_TValue", covariant=True)
+
+
+class LazyProxy(t.Generic[_TValue]):
     """Class for proxy objects that delegate to a specified function to evaluate
     the actual object.
 
@@ -181,8 +184,9 @@ class LazyProxy:
     Hello, world!
     """
     __slots__ = ['_func', '_args', '_kwargs', '_value', '_is_cache_enabled', '_attribute_error']
+    _value: t.Optional[_TValue]
 
-    def __init__(self, func: t.Callable, *args, **kwargs) -> None:
+    def __init__(self, func: t.Callable[..., _TValue], *args, **kwargs) -> None:
         is_cache_enabled = kwargs.pop('enable_cache', True)
         # Avoid triggering our own __setattr__ implementation
         object.__setattr__(self, '_func', func)
@@ -193,7 +197,7 @@ class LazyProxy:
         object.__setattr__(self, '_attribute_error', None)
 
     @property
-    def value(self) -> t.Union[int, str]:
+    def value(self) -> _TValue:
         if self._value is None:
             try:
                 value = self._func(*self._args, **self._kwargs)
@@ -204,7 +208,7 @@ class LazyProxy:
             if not self._is_cache_enabled:
                 return value
             object.__setattr__(self, '_value', value)
-        return self._value
+        return t.cast(_TValue, self._value)
 
     def __contains__(self, key):
         return key in self.value
@@ -476,7 +480,7 @@ class NullTranslations(gettext.NullTranslations):
             if self._fallback:
                 return self._fallback.upgettext(context, message)
             return str(message)
-        return tmsg
+        return t.cast(str, tmsg)
 
     def unpgettext(self, context: str, singular: str, plural: str, num: int) -> str:
         """Do a plural-forms lookup of a message id.  `singular` is used as the
@@ -542,7 +546,9 @@ class NullTranslations(gettext.NullTranslations):
     # backward compatibility with 0.9
     dunpgettext = udnpgettext
 
-    def ldnpgettext(self, domain: str, context, singular: str, plural: str, num: int) -> str:
+    def ldnpgettext(
+        self, domain: str, context, singular: str, plural: str, num: int
+    ) -> t.Union[str, bytes]:
         """Equivalent to ``dnpgettext()``, but the translation is returned in
         the preferred system encoding, if no other encoding was explicitly set
         with ``bind_textdomain_codeset()``.
