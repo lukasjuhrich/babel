@@ -211,7 +211,7 @@ class LazyProxy(t.Generic[_TValue]):
         return t.cast(_TValue, self._value)
 
     def __contains__(self, key):
-        return key in self.value
+        return key in self.value  # type: ignore
 
     def __bool__(self):
         return bool(self.value)
@@ -220,19 +220,19 @@ class LazyProxy(t.Generic[_TValue]):
         return dir(self.value)
 
     def __iter__(self):
-        return iter(self.value)
+        return iter(self.value)  # type: ignore
 
     def __len__(self):
-        return len(self.value)
+        return len(self.value)  # type: ignore
 
     def __str__(self) -> str:
         return str(self.value)
 
     def __add__(self, other):
-        return self.value + other
+        return self.value + other  # type: ignore
 
-    def __radd__(self, other: str) -> str:
-        return other + self.value
+    def __radd__(self, other):
+        return other + self.value  # type: ignore
 
     def __mod__(self, other):
         return self.value % other
@@ -247,13 +247,13 @@ class LazyProxy(t.Generic[_TValue]):
         return other * self.value
 
     def __call__(self, *args, **kwargs):
-        return self.value(*args, **kwargs)
+        return self.value(*args, **kwargs)  # type: ignore
 
     def __lt__(self, other: "LazyProxy") -> bool:
-        return self.value < other
+        return self.value < other  # type: ignore
 
     def __le__(self, other):
-        return self.value <= other
+        return self.value <= other  # type: ignore
 
     def __eq__(self, other):
         return self.value == other
@@ -262,7 +262,7 @@ class LazyProxy(t.Generic[_TValue]):
         return self.value != other
 
     def __gt__(self, other: str) -> bool:
-        return self.value > other
+        return self.value > other  # type: ignore
 
     def __ge__(self, other):
         return self.value >= other
@@ -279,13 +279,13 @@ class LazyProxy(t.Generic[_TValue]):
         setattr(self.value, name, value)
 
     def __delitem__(self, key):
-        del self.value[key]
+        del self.value[key]  # type: ignore
 
     def __getitem__(self, key):
-        return self.value[key]
+        return self.value[key]  # type: ignore
 
     def __setitem__(self, key, value):
-        self.value[key] = value
+        self.value[key] = value  # type: ignore
 
     def __copy__(self) -> "LazyProxy":
         return LazyProxy(
