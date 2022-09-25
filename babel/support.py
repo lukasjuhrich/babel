@@ -23,9 +23,10 @@ from babel.numbers import format_decimal, format_currency, \
 from datetime import (
     date as std_date,
     datetime as std_datetime,
+    time as std_time,
     timedelta as std_timedelta,
+    tzinfo as std_tzinfo,
 )
-from io import BufferedReader, BytesIO
 
 
 class Format:
@@ -41,7 +42,7 @@ class Format:
     u'1.234'
     """
 
-    def __init__(self, locale: str, tzinfo: None = None) -> None:
+    def __init__(self, locale: str, tzinfo: t.Optional[std_tzinfo] = None) -> None:
         """Initialize the formatter.
 
         :param locale: the locale identifier or `Locale` instance
@@ -75,7 +76,9 @@ class Format:
                                locale=self.locale)
 
     def time(
-        self, time: t.Optional[std_datetime] = None, format: str = "medium"
+        self,
+        time: t.Optional[t.Union[std_time, std_datetime]] = None,
+        format: str = "medium",
     ) -> str:
         """Return a time formatted according to the given pattern.
 
@@ -305,6 +308,20 @@ class LazyProxy(t.Generic[_TValue]):
         )
 
 
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol  # type: ignore
+
+
+class _TranslationsReader(Protocol):
+    def read(self) -> bytes:
+        ...
+
+    # optional:
+    # name: str
+
+
 class NullTranslations(gettext.NullTranslations):
 
     DEFAULT_DOMAIN: t.Optional[str] = None
@@ -323,7 +340,7 @@ class NullTranslations(gettext.NullTranslations):
     # mypy thinks this instance variable is a method if we declare it here
     # plural: t.Callable[[int], int]
 
-    def __init__(self, fp: t.Optional[t.Union[BytesIO, BufferedReader]] = None) -> None:
+    def __init__(self, fp: _TranslationsReader = None) -> None:
         """Initialize a simple translations class which is not backed by a
         real catalog. Behaves similar to gettext.NullTranslations but also
         offers Babel's on *gettext methods (e.g. 'dgettext()').
@@ -560,6 +577,13 @@ class NullTranslations(gettext.NullTranslations):
     ungettext = gettext.NullTranslations.ngettext
 
 
+try:
+    LocaleLike: t.TypeAlias = t.Union[Locale, str]
+except AttributeError:
+    LocaleLike = t.Union[Locale, str]  # type: ignore
+
+
+
 class Translations(NullTranslations, gettext.GNUTranslations):
     """An extended translation catalog class."""
 
@@ -567,7 +591,7 @@ class Translations(NullTranslations, gettext.GNUTranslations):
 
     def __init__(
         self,
-        fp: t.Optional[t.Union[BytesIO, BufferedReader]] = None,
+        fp: _TranslationsReader = None,
         domain: t.Optional[str] = None,
     ) -> None:
         """Initialize the translations catalog.
@@ -585,9 +609,9 @@ class Translations(NullTranslations, gettext.GNUTranslations):
     def load(
         cls,
         dirname: t.Optional[str] = None,
-        locales: t.Optional[t.Tuple[str]] = None,
+        locales: t.Optional[t.Union[t.Tuple[LocaleLike], t.List[LocaleLike], LocaleLike]] = None,
         domain: t.Optional[str] = None,
-    ) -> "Translations":
+    ) -> NullTranslations:
         """Load translations from the given directory.
 
         :param dirname: the directory containing the ``MO`` files
