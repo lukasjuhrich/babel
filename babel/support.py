@@ -622,8 +622,12 @@ class Translations(NullTranslations, gettext.GNUTranslations):
         """
         if locales is not None:
             if not isinstance(locales, (list, tuple)):
-                locales = [locales]
-            locales = [str(locale) for locale in locales]
+                locales = [locales]  # type: ignore
+            locales = [str(locale) for locale in locales]  # type: ignore
+        # mypy is not too good at inferring tpyes in branches correctly
+        # when redefinitions are at play, so we make a forceful assertion
+        locales = t.cast(t.Optional[t.List[str]], locales)
+
         if not domain:
             domain = cls.DEFAULT_DOMAIN
         filename = gettext.find(domain, dirname, locales)
